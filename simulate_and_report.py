@@ -10,7 +10,7 @@ OUT_DIR = Path("docs")
 OUT_DIR.mkdir(exist_ok=True)
 
 # ===== 固定設定 =====
-START = "2015-01-01"
+START = "2026-01-01"
 END = dt.date.today().isoformat()
 MONTHLY_TWD = 10000.0
 TRADE_MODE = "month_start"  # 月初：每月第一個交易日
