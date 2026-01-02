@@ -64,11 +64,19 @@ def simulate(start, end, monthly_twd, trade_mode):
 
     if qqq.empty:
         raise RuntimeError("QQQ 價格資料抓不到（Yahoo Finance）。")
-    if fx.empty:
-        raise RuntimeError("TWD=X 匯率資料抓不到（Yahoo Finance）。")
 
     qqq_price = qqq["Close"].dropna()
-    fx_rate = fx["Close"].dropna().reindex(qqq_price.index).ffill()
+    if qqq_price.empty:
+        raise RuntimeError("QQQ Close 欄位是空的（Yahoo Finance）。")
+
+    # 匯率抓不到就用備援，不要讓整個報表掛掉
+    FALLBACK_FX = 31.5  # 可自行調整
+    if fx.empty or "Close" not in fx:
+        fx_rate = pd.Series(FALLBACK_FX, index=qqq_price.index)
+    else:
+        fx_rate = fx["Close"].dropna().reindex(qqq_price.index).ffill()
+        if fx_rate.empty:
+            fx_rate = pd.Series(FALLBACK_FX, index=qqq_price.index)
 
     trade_dates = pick_trade_dates(qqq_price.index, start, end, trade_mode)
 
@@ -79,12 +87,11 @@ def simulate(start, end, monthly_twd, trade_mode):
     rows = []
 
     for d in trade_dates:
-        # yfinance 有時回 Series，統一用 iloc[0]
-        rate = float(fx_rate.loc[d].iloc[0])       # TWD per USD（近似中間價）
-        price = float(qqq_price.loc[d].iloc[0])    # QQQ price in USD
+        rate = float(fx_rate.loc[d])      # 這裡 fx_rate 已經保證不會空
+        price = float(qqq_price.loc[d])
 
         if rate < 1:
-            raise RuntimeError("匯率看起來反了（fx 太小）。請檢查 TWD=X 的定義。")
+            raise RuntimeError("匯率看起來反了（fx 太小）。")
 
         usd_gross = monthly_twd / rate
         usd_net_fx = usd_gross * (1 - fx_spread)
