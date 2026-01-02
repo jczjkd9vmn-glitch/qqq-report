@@ -59,8 +59,15 @@ def cathay_fx_oneway_spread(mode: str) -> float:
 
 
 def simulate(start, end, monthly_twd, trade_mode):
-    qqq = yf.download("QQQ", start=start, end=end, auto_adjust=True, progress=False)
-    fx = yf.download("TWD=X", start=start, end=end, auto_adjust=True, progress=False)
+       # ✅ 下載資料要有緩衝，不然遇到假日/資料延遲就會空
+    start_fetch = (pd.to_datetime(start) - pd.Timedelta(days=45)).strftime("%Y-%m-%d")
+
+    qqq = yf.download("QQQ", start=start_fetch, end=end, auto_adjust=True, progress=False)
+
+    # 匯率先試 TWD=X，空的話再試 USDTWD=X（有時 Yahoo ticker 會抽風）
+    fx = yf.download("TWD=X", start=start_fetch, end=end, auto_adjust=True, progress=False)
+    if fx.empty:
+        fx = yf.download("USDTWD=X", start=start_fetch, end=end, auto_adjust=True, progress=False)
 
     if qqq.empty:
         raise RuntimeError("QQQ 價格資料抓不到（Yahoo Finance）。")
