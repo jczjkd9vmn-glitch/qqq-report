@@ -1,0 +1,29 @@
+name: Monthly QQQ Report (Cathay Cost)
+
+on:
+  schedule:
+    - cron: "0 2 1 * *"   # 02:00 UTC = 10:00 台北時間
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Generate report
+        run: python simulate_and_report.py
+      - name: Commit report
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add docs/index.html docs/data.csv
+          git commit -m "Update monthly report" || echo "No changes"
+          git push
