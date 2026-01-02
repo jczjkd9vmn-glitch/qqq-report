@@ -2,7 +2,7 @@ name: Monthly QQQ Report (Cathay Cost)
 
 on:
   schedule:
-    - cron: "0 2 1 * *"   # 02:00 UTC = 10:00 台北時間
+    - cron: "0 2 1 * *"   # 02:00 UTC = 10:00 台北
   workflow_dispatch:
 
 permissions:
